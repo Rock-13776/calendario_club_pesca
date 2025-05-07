@@ -20,9 +20,9 @@
 <body>
   <div id="calendar"></div>
 
-  <!-- FullCalendar y PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script> <!-- Cliente de Socket.IO -->
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -31,7 +31,7 @@
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         firstDay: 1,
-		locale: 'es',
+        locale: 'es',
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
@@ -42,53 +42,41 @@
 
       calendar.render();
 
-      const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKSb1EXkwC_yS66UHxKRFZe4GGeoSHrYIglb0fasG9XSUMHi-amqUB2Bn56tOSUfor3D97WOExPPPc/pub?gid=1560710832&single=true&output=csv';
-      
-      // 🔄 Usamos un proxy alternativo para evitar problemas de CORS
-      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(sheetUrl);
+      // 🔄 Función para cargar eventos del CSV
+      function cargarEventos() {
+        fetch('/csv')
+          .then(response => {
+            if (!response.ok) {
+              console.error("❌ Error al obtener el CSV:", response.status, response.statusText);
+              throw new Error(`Error al obtener el CSV: ${response.statusText}`);
+            }
+            return response.text();
+          })
+          .then(csvText => {
+            const data = Papa.parse(csvText, { header: true }).data;
 
-      // 🌐 Petición para obtener el CSV
-      fetch(proxyUrl)
-        .then(response => {
-          if (!response.ok) {
-            console.error("❌ Error al obtener el CSV:", response.status, response.statusText);
-            throw new Error(`Error al obtener el CSV: ${response.statusText}`);
-          }
-          return response.text();
-        })
-        .then(csvText => {
-          console.log("✅ CSV obtenido correctamente:");
-          console.log(csvText);
+            const events = data
+              .filter(row => row.Fecha && row.Evento)
+              .map(row => {
+                const formattedDate = formatDate(row.Fecha);
+                if (formattedDate) {
+                  return {
+                    title: row.Evento,
+                    start: formattedDate
+                  };
+                }
+                console.warn("⚠️ Fecha inválida encontrada:", row.Fecha);
+                return null;
+              })
+              .filter(event => event !== null);
 
-          // Parseamos el CSV
-          const data = Papa.parse(csvText, { header: true }).data;
-          console.log("📌 Datos obtenidos del CSV:", data);
-
-          // Mapeo de eventos
-          const events = data
-            .filter(row => row.Fecha && row.Evento)
-            .map(row => {
-              const formattedDate = formatDate(row.Fecha);
-              if (formattedDate) {
-                return {
-                  title: row.Evento,
-                  start: formattedDate
-                };
-              }
-              console.warn("⚠️ Fecha inválida encontrada:", row.Fecha);
-              return null;
-            })
-            .filter(event => event !== null);
-
-          console.log("📅 Eventos procesados para el calendario:", events);
-
-          // Añadimos los eventos al calendario
-          calendar.addEventSource(events);
-        })
-        .catch(error => {
-          console.error("❌ Error en la petición fetch:", error.message);
-          alert("No se pudieron cargar los eventos. Revisa la consola para más información.");
-        });
+            calendar.removeAllEventSources(); // Limpiar eventos antiguos
+            calendar.addEventSource(events);   // Añadir eventos nuevos
+          })
+          .catch(error => {
+            console.error("❌ Error en la petición fetch:", error.message);
+          });
+      }
 
       // 🔄 Función para formatear la fecha al estilo ISO (yyyy-mm-dd)
       function formatDate(ddmmyyyy) {
@@ -98,9 +86,17 @@
         }
         return null;
       }
+
+      // 🚀 Cargamos los eventos inicialmente
+      cargarEventos();
+
+      // 🔔 Escuchamos el evento de actualización en tiempo real
+      const socket = io();
+      socket.on('csvUpdated', () => {
+        console.log("🔄 El CSV ha sido actualizado. Recargando eventos...");
+        cargarEventos();
+      });
     });
   </script>
 </body>
 </html>
-
-
