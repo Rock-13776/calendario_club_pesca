@@ -41,33 +41,30 @@
 
       calendar.render();
 
+      // URL del CSV compartido
       const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKSb1EXkwC_yS66UHxKRFZe4GGeoSHrYIglb0fasG9XSUMHi-amqUB2Bn56tOSUfor3D97WOExPPPc/pub?gid=1560710832&single=true&output=csv';
-      const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(sheetUrl);
+      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(sheetUrl);
 
       fetch(proxyUrl)
         .then(response => {
-          if (!response.ok) {
-            console.error("❌ Error al obtener el CSV:", response.status, response.statusText);
-            throw new Error(`Error al obtener el CSV: ${response.statusText}`);
-          }
-          return response.json();
+          if (!response.ok) throw new Error(`Error al obtener el CSV: ${response.statusText}`);
+          return response.text();
         })
-        .then(data => {
-          const csvText = data.contents;
+        .then(csvText => {
           console.log("✅ CSV obtenido correctamente:");
           console.log(csvText);
 
-          const parsedData = Papa.parse(csvText, { header: true }).data;
-          console.log("📌 Datos obtenidos del CSV:", parsedData);
+          const data = Papa.parse(csvText, { header: true }).data;
+          console.log("📌 Datos obtenidos del CSV:", data);
 
-          const events = parsedData
-            .filter(row => row.Fecha && row.Modalidad)
+          const events = data
+            .filter(row => row.Fecha && row.Modalidad) // Filtrar filas válidas
             .map(row => {
               const formattedDate = formatDate(row.Fecha);
               if (formattedDate) {
                 return {
-                  title: row.Modalidad,
-                  start: formattedDate
+                  title: `${row.Modalidad} - ${row.Tipo} (${row.Lugar})`,
+                  start: formattedDate,
                 };
               }
               console.warn("⚠️ Fecha inválida encontrada:", row.Fecha);
@@ -77,13 +74,14 @@
 
           console.log("📅 Eventos procesados para el calendario:", events);
 
-          calendar.addEventSource(events);
+          calendar.addEventSource(events); // ✅ Añadir eventos al calendario
         })
         .catch(error => {
           console.error("❌ Error en la petición fetch:", error.message);
           alert("No se pudieron cargar los eventos. Revisa la consola para más información.");
         });
 
+      // Función para formatear la fecha al formato ISO (yyyy-mm-dd)
       function formatDate(ddmmyyyy) {
         const [dd, mm, yyyy] = ddmmyyyy.split('/');
         if (dd && mm && yyyy) {
