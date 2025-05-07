@@ -7,26 +7,15 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
     }
     #calendar {
       max-width: 900px;
-      margin: 0 auto;
-      position: relative;
+      margin: 40px auto;
     }
-    #calendar::before {
-      content: "";
-      background: url('https://i.imgur.com/BmpM8Rt.jpeg') no-repeat center center;
-      background-size: contain;
-      opacity: 0.2;
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-    }
+  </style>
 </head>
 <body>
   <div id="calendar"></div>
@@ -41,8 +30,8 @@
 
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        locale: 'es',
-		firstDay: 1,
+        firstDay: 1,
+		locale: 'es',
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
@@ -53,30 +42,37 @@
 
       calendar.render();
 
-      // URL del CSV compartido
       const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKSb1EXkwC_yS66UHxKRFZe4GGeoSHrYIglb0fasG9XSUMHi-amqUB2Bn56tOSUfor3D97WOExPPPc/pub?gid=1560710832&single=true&output=csv';
-      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(sheetUrl);
+      
+      // 🔄 Usamos un proxy alternativo para evitar problemas de CORS
+      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(sheetUrl);
 
+      // 🌐 Petición para obtener el CSV
       fetch(proxyUrl)
         .then(response => {
-          if (!response.ok) throw new Error(`Error al obtener el CSV: ${response.statusText}`);
+          if (!response.ok) {
+            console.error("❌ Error al obtener el CSV:", response.status, response.statusText);
+            throw new Error(`Error al obtener el CSV: ${response.statusText}`);
+          }
           return response.text();
         })
         .then(csvText => {
           console.log("✅ CSV obtenido correctamente:");
           console.log(csvText);
 
+          // Parseamos el CSV
           const data = Papa.parse(csvText, { header: true }).data;
           console.log("📌 Datos obtenidos del CSV:", data);
 
+          // Mapeo de eventos
           const events = data
-            .filter(row => row.Fecha && row.Modalidad) // Filtrar filas válidas
+            .filter(row => row.Fecha && row.Evento)
             .map(row => {
               const formattedDate = formatDate(row.Fecha);
               if (formattedDate) {
                 return {
-                  title: `${row.Modalidad} - ${row.Tipo} (${row.Lugar})`,
-                  start: formattedDate,
+                  title: row.Evento,
+                  start: formattedDate
                 };
               }
               console.warn("⚠️ Fecha inválida encontrada:", row.Fecha);
@@ -86,14 +82,15 @@
 
           console.log("📅 Eventos procesados para el calendario:", events);
 
-          calendar.addEventSource(events); // ✅ Añadir eventos al calendario
+          // Añadimos los eventos al calendario
+          calendar.addEventSource(events);
         })
         .catch(error => {
           console.error("❌ Error en la petición fetch:", error.message);
           alert("No se pudieron cargar los eventos. Revisa la consola para más información.");
         });
 
-      // Función para formatear la fecha al formato ISO (yyyy-mm-dd)
+      // 🔄 Función para formatear la fecha al estilo ISO (yyyy-mm-dd)
       function formatDate(ddmmyyyy) {
         const [dd, mm, yyyy] = ddmmyyyy.split('/');
         if (dd && mm && yyyy) {
@@ -105,4 +102,5 @@
   </script>
 </body>
 </html>
+
 
