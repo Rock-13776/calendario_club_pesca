@@ -42,7 +42,7 @@
       calendar.render();
 
       const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKSb1EXkwC_yS66UHxKRFZe4GGeoSHrYIglb0fasG9XSUMHi-amqUB2Bn56tOSUfor3D97WOExPPPc/pub?gid=1560710832&single=true&output=csv';
-      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(sheetUrl);
+      const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(sheetUrl);
 
       fetch(proxyUrl)
         .then(response => {
@@ -50,19 +50,18 @@
             console.error("❌ Error al obtener el CSV:", response.status, response.statusText);
             throw new Error(`Error al obtener el CSV: ${response.statusText}`);
           }
-          return response.text();
+          return response.json();
         })
-        .then(csvText => {
+        .then(data => {
+          const csvText = data.contents;
           console.log("✅ CSV obtenido correctamente:");
           console.log(csvText);
 
-          // Parseamos el CSV
-          const data = Papa.parse(csvText, { header: true }).data;
-          console.log("📌 Datos obtenidos del CSV:", data);
+          const parsedData = Papa.parse(csvText, { header: true }).data;
+          console.log("📌 Datos obtenidos del CSV:", parsedData);
 
-          // Mapeo de eventos
-          const events = data
-            .filter(row => row.Fecha && row.Modalidad) // Cambio de Evento a Modalidad
+          const events = parsedData
+            .filter(row => row.Fecha && row.Modalidad)
             .map(row => {
               const formattedDate = formatDate(row.Fecha);
               if (formattedDate) {
@@ -78,7 +77,6 @@
 
           console.log("📅 Eventos procesados para el calendario:", events);
 
-          // Añadimos los eventos al calendario
           calendar.addEventSource(events);
         })
         .catch(error => {
