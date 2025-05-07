@@ -51,12 +51,18 @@
         })
         .then(csvText => {
           const data = Papa.parse(csvText, { header: true }).data;
+
+          // Verificación de los datos obtenidos
+          console.log("Datos obtenidos del CSV:", data);
+
           const events = data
             .filter(row => row.Fecha && row.Evento)
             .map(row => ({
               title: row.Evento,
               start: formatDate(row.Fecha)
             }));
+
+          console.log("Eventos procesados para el calendario:", events);
 
           calendar.addEventSource(events);
         })
@@ -66,6 +72,7 @@
 
       function formatDate(ddmmyyyy) {
         const [dd, mm, yyyy] = ddmmyyyy.split('/');
+        // Asegurarse de que día y mes tengan dos dígitos
         return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
       }
     });
