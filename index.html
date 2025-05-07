@@ -48,7 +48,7 @@
       const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(sheetUrl);
 
       // 🌐 Petición para obtener el CSV
-      fetch(proxyUrl)
+      fetch(sheetUrl)
         .then(response => {
           if (!response.ok) {
             console.error("❌ Error al obtener el CSV:", response.status, response.statusText);
