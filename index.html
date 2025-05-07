@@ -15,10 +15,49 @@
       max-width: 900px;
       margin: 40px auto;
     }
+    /* Estilos para el modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: white;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      position: relative;
+    }
+    .close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 18px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <div id="calendar"></div>
+
+  <!-- Modal -->
+  <div id="eventModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 id="modalTitle"></h2>
+      <p><strong>Modalidad:</strong> <span id="modalModalidad"></span></p>
+      <p><strong>Tipo:</strong> <span id="modalTipo"></span></p>
+      <p><strong>Categoría:</strong> <span id="modalCategoria"></span></p>
+      <p><strong>Lugar:</strong> <span id="modalLugar"></span></p>
+      <p><strong>Notas:</strong> <span id="modalNotas"></span></p>
+    </div>
+  </div>
 
   <!-- FullCalendar y PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
@@ -27,80 +66,80 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const calendarEl = document.getElementById('calendar');
-
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         firstDay: 1,
-		locale: 'es',
+        locale: 'es',
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
           right: 'dayGridMonth,listMonth'
         },
-        events: []
+        events: [],
+        eventClick: function(info) {
+          // Llenar el modal con los datos del evento
+          document.getElementById('modalTitle').innerText = info.event.title;
+          document.getElementById('modalModalidad').innerText = info.event.extendedProps.modalidad || 'No disponible';
+          document.getElementById('modalTipo').innerText = info.event.extendedProps.tipo || 'No disponible';
+          document.getElementById('modalCategoria').innerText = info.event.extendedProps.categoria || 'No disponible';
+          document.getElementById('modalLugar').innerText = info.event.extendedProps.lugar || 'No disponible';
+          document.getElementById('modalNotas').innerText = info.event.extendedProps.notas || 'No disponible';
+          document.getElementById('eventModal').style.display = 'block';
+        }
       });
 
       calendar.render();
 
-      const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKSb1EXkwC_yS66UHxKRFZe4GGeoSHrYIglb0fasG9XSUMHi-amqUB2Bn56tOSUfor3D97WOExPPPc/pub?gid=1560710832&single=true&output=csv';
-      
-      // 🔄 Usamos un proxy alternativo para evitar problemas de CORS
-      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(sheetUrl);
+      // Modal
+      const modal = document.getElementById("eventModal");
+      const closeBtn = document.getElementsByClassName("close")[0];
+      closeBtn.onclick = () => (modal.style.display = "none");
+      window.onclick = (event) => {
+        if (event.target == modal) modal.style.display = "none";
+      };
 
-      // 🌐 Petición para obtener el CSV
-      fetch(sheetUrl)
-        .then(response => {
-          if (!response.ok) {
-            console.error("❌ Error al obtener el CSV:", response.status, response.statusText);
-            throw new Error(`Error al obtener el CSV: ${response.statusText}`);
-          }
-          return response.text();
-        })
+      // Petición al servidor local
+      fetch('/eventos.csv')
+        .then(response => response.text())
         .then(csvText => {
           console.log("✅ CSV obtenido correctamente:");
           console.log(csvText);
 
-          // Parseamos el CSV
+          // Parsear CSV
           const data = Papa.parse(csvText, { header: true }).data;
-          console.log("📌 Datos obtenidos del CSV:", data);
 
           // Mapeo de eventos
           const events = data
-            .filter(row => row.Fecha && row.Evento)
+            .filter(row => row.Fecha && row.Modalidad)
             .map(row => {
               const formattedDate = formatDate(row.Fecha);
               if (formattedDate) {
                 return {
-                  title: row.Evento,
-                  start: formattedDate
+                  title: `${row.Modalidad} - ${row.Tipo ?? ''}`,
+                  start: formattedDate,
+                  modalidad: row.Modalidad ?? 'No disponible',
+                  tipo: row.Tipo ?? 'No disponible',
+                  categoria: row.Categoria ?? 'No disponible',
+                  lugar: row.Lugar ?? 'No disponible',
+                  notas: row.Notas ?? 'No disponible'
                 };
               }
-              console.warn("⚠️ Fecha inválida encontrada:", row.Fecha);
               return null;
             })
             .filter(event => event !== null);
 
-          console.log("📅 Eventos procesados para el calendario:", events);
-
-          // Añadimos los eventos al calendario
           calendar.addEventSource(events);
         })
         .catch(error => {
           console.error("❌ Error en la petición fetch:", error.message);
-          alert("No se pudieron cargar los eventos. Revisa la consola para más información.");
+          alert("No se pudieron cargar los eventos.");
         });
 
-      // 🔄 Función para formatear la fecha al estilo ISO (yyyy-mm-dd)
       function formatDate(ddmmyyyy) {
         const [dd, mm, yyyy] = ddmmyyyy.split('/');
-        if (dd && mm && yyyy) {
-          return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
-        }
-        return null;
+        return dd && mm && yyyy ? `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}` : null;
       }
     });
   </script>
 </body>
 </html>
-
-
