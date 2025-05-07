@@ -42,38 +42,60 @@
       calendar.render();
 
       const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKSb1EXkwC_yS66UHxKRFZe4GGeoSHrYIglb0fasG9XSUMHi-amqUB2Bn56tOSUfor3D97WOExPPPc/pub?gid=1560710832&single=true&output=csv';
-      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(sheetUrl);
+      
+      // 🔄 Usamos un proxy alternativo para evitar problemas de CORS
+      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(sheetUrl);
 
+      // 🌐 Petición para obtener el CSV
       fetch(proxyUrl)
         .then(response => {
-          if (!response.ok) throw new Error("Error al obtener el CSV");
+          if (!response.ok) {
+            console.error("❌ Error al obtener el CSV:", response.status, response.statusText);
+            throw new Error(`Error al obtener el CSV: ${response.statusText}`);
+          }
           return response.text();
         })
         .then(csvText => {
+          console.log("✅ CSV obtenido correctamente:");
+          console.log(csvText);
+
+          // Parseamos el CSV
           const data = Papa.parse(csvText, { header: true }).data;
+          console.log("📌 Datos obtenidos del CSV:", data);
 
-          // Verificación de los datos obtenidos
-          console.log("Datos obtenidos del CSV:", data);
-
+          // Mapeo de eventos
           const events = data
             .filter(row => row.Fecha && row.Evento)
-            .map(row => ({
-              title: row.Evento,
-              start: formatDate(row.Fecha)
-            }));
+            .map(row => {
+              const formattedDate = formatDate(row.Fecha);
+              if (formattedDate) {
+                return {
+                  title: row.Evento,
+                  start: formattedDate
+                };
+              }
+              console.warn("⚠️ Fecha inválida encontrada:", row.Fecha);
+              return null;
+            })
+            .filter(event => event !== null);
 
-          console.log("Eventos procesados para el calendario:", events);
+          console.log("📅 Eventos procesados para el calendario:", events);
 
+          // Añadimos los eventos al calendario
           calendar.addEventSource(events);
         })
         .catch(error => {
-          console.error("Error al obtener el CSV:", error);
+          console.error("❌ Error en la petición fetch:", error.message);
+          alert("No se pudieron cargar los eventos. Revisa la consola para más información.");
         });
 
+      // 🔄 Función para formatear la fecha al estilo ISO (yyyy-mm-dd)
       function formatDate(ddmmyyyy) {
         const [dd, mm, yyyy] = ddmmyyyy.split('/');
-        // Asegurarse de que día y mes tengan dos dígitos
-        return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+        if (dd && mm && yyyy) {
+          return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+        }
+        return null;
       }
     });
   </script>
