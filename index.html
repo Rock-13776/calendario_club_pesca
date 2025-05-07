@@ -42,11 +42,8 @@
       calendar.render();
 
       const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKSb1EXkwC_yS66UHxKRFZe4GGeoSHrYIglb0fasG9XSUMHi-amqUB2Bn56tOSUfor3D97WOExPPPc/pub?gid=1560710832&single=true&output=csv';
-      
-      // 🔄 Usamos un proxy alternativo para evitar problemas de CORS
       const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(sheetUrl);
 
-      // 🌐 Petición para obtener el CSV
       fetch(proxyUrl)
         .then(response => {
           if (!response.ok) {
@@ -65,12 +62,12 @@
 
           // Mapeo de eventos
           const events = data
-            .filter(row => row.Fecha && row.Evento)
+            .filter(row => row.Fecha && row.Modalidad) // Cambio de Evento a Modalidad
             .map(row => {
               const formattedDate = formatDate(row.Fecha);
               if (formattedDate) {
                 return {
-                  title: row.Evento,
+                  title: row.Modalidad,
                   start: formattedDate
                 };
               }
@@ -89,7 +86,6 @@
           alert("No se pudieron cargar los eventos. Revisa la consola para más información.");
         });
 
-      // 🔄 Función para formatear la fecha al estilo ISO (yyyy-mm-dd)
       function formatDate(ddmmyyyy) {
         const [dd, mm, yyyy] = ddmmyyyy.split('/');
         if (dd && mm && yyyy) {
