@@ -65,50 +65,38 @@
       cursor: pointer;
     }
 
-    /* RESPONSIVE DESIGN */
-    @media (max-width: 768px) {
-      #calendar {
-        max-width: 100%;
-        margin: 10px;
-        padding: 10px;
-        min-height: 600px;
-        overflow-y: auto; /* 🚀 Scroll solo si es necesario */
-      }
-
-      #calendar .fc-daygrid-day-frame {
-        min-height: 80px; /* 🚀 Más altura en cada día para evitar cortes */
-      }
-
-      #calendar::before {
-        background-size: 100px;
-        left: 10px;
-        top: 10px;
-      }
-
-      #viewToggle {
-        display: block;
-        margin: 0 auto 15px auto;
-        padding: 5px 15px;
-        font-size: 1em;
-        background-color: #007BFF;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-      }
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
     }
 
-    @media (max-width: 480px) {
-      .calendar-header h2 {
-        font-size: 1.2em;
-      }
+    .modal-content {
+      background: white;
+      max-width: 500px;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 10px;
+      position: relative;
+    }
 
-      #calendar::before {
-        background-size: 80px;
-        left: 5px;
-        top: 5px;
-      }
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      cursor: pointer;
+      font-size: 18px;
+      color: #aaa;
+    }
+
+    .modal-close:hover {
+      color: black;
     }
   </style>
 </head>
@@ -122,14 +110,25 @@
   <button id="viewToggle">Cambiar a Vista Lista</button>
   <div id="calendar"></div>
 
+  <!-- Modal -->
+  <div class="modal" id="eventoModal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="document.getElementById('eventoModal').style.display='none'">&times;</span>
+      <div id="modalDetalles"></div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const calendarEl = document.getElementById('calendar');
+      const modal = document.getElementById('eventoModal');
+      const modalDetalles = document.getElementById('modalDetalles');
       const viewToggle = document.getElementById('viewToggle');
-      let currentView = window.innerWidth < 768 ? 'listMonth' : 'dayGridMonth';
+
+      let currentView = 'dayGridMonth'; // 🚀 Siempre inicia en vista de calendario
 
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: currentView,
@@ -146,6 +145,21 @@
           list: 'Lista'
         },
         events: [],
+        eventClick: function(info) {
+          const data = info.event.extendedProps.datosFila;
+
+          // Construimos el contenido de la modal
+          modalDetalles.innerHTML = `
+            <h3>${info.event.title}</h3>
+            <p><strong>Fecha:</strong> ${info.event.startStr}</p>
+            <p><strong>Modalidad:</strong> ${data.Modalidad}</p>
+            <p><strong>Tipo:</strong> ${data.Tipo}</p>
+            <p><strong>Categoría:</strong> ${data.Categoria}</p>
+            <p><strong>Lugar:</strong> ${data.Lugar || 'No especificado'}</p>
+            <p><strong>Notas:</strong> ${data.Notas || 'Sin notas'}</p>
+          `;
+          modal.style.display = 'block';
+        }
       });
 
       calendar.render();
