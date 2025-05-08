@@ -180,25 +180,36 @@
           return response.text();
         })
         .then(csvText => {
-          const data = Papa.parse(csvText, { header: true }).data;
+		  const data = Papa.parse(csvText, { header: true }).data;
 
-          const events = data
-            .filter(row => row.Fecha && row.Modalidad && row.Tipo)
-            .map(row => {
-              const [dd, mm, yyyy] = row.Fecha.split('/');
-              if (dd && mm && yyyy) {
-                return {
-                  title: `${row.Modalidad} - ${row.Tipo} (${row.Lugar || 'Sin lugar'})`,
-                  start: `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`,
-                  datosFila: row
-                };
-              }
-              return null;
-            })
-            .filter(event => event !== null);
+		  // Mapa de colores
+		  const colorMap = {
+			"Surfcasting": "#4A90E2",
+			"Spinning": "#7ED321",
+			"Embarcación": "#F5A623",
+			"Kayak": "#D0021B"
+		  };
 
-          calendar.addEventSource(events);
-        })
+		  const events = data
+			.filter(row => row.Fecha && row.Modalidad && row.Tipo)
+			.map(row => {
+			  const [dd, mm, yyyy] = row.Fecha.split('/');
+			  if (dd && mm && yyyy) {
+				return {
+				  title: `${row.Modalidad} - ${row.Tipo} (${row.Lugar || 'Sin lugar'})`,
+				  start: `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`,
+				  backgroundColor: colorMap[row.Modalidad] || '#9B9B9B',
+				  borderColor: colorMap[row.Modalidad] || '#9B9B9B',
+				  datosFila: row
+				};
+			  }
+			  return null;
+			})
+			.filter(event => event !== null);
+
+		  calendar.addEventSource(events);
+		})
+
         .catch(error => {
           console.error("❌ Error al cargar el CSV:", error);
         });
