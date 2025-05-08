@@ -71,6 +71,12 @@
         max-width: 100%;
         margin: 10px;
         padding: 10px;
+        min-height: 600px;
+        overflow-y: auto; /* 🚀 Scroll solo si es necesario */
+      }
+
+      #calendar .fc-daygrid-day-frame {
+        min-height: 80px; /* 🚀 Más altura en cada día para evitar cortes */
       }
 
       #calendar::before {
