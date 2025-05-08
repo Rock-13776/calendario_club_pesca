@@ -5,83 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Calendario Club de Pesca</title>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Hobo+Std&display=swap" rel="stylesheet">
   <style>
-  body {
-    font-family: sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #f9f9f9;
-  }
-     #calendar {
-    position: relative;
-    max-width: 900px;
-    margin: 40px auto;
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    overflow: hidden; /* Para que el fondo no se salga del borde redondeado */
-  }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+    }
 
-  #calendar::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url('https://i.imgur.com/BmpM8Rt.jpeg');
-    background-size: 70%; /* Ajusta el tamaño según prefieras */
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0.1; /* Atenuado para que no moleste la lectura */
-    z-index: 1;
-  }
+    .calendar-header {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+      font-family: 'Hobo Std', sans-serif;
+    }
 
-  .fc-view,
-  .fc-view * {
-    position: relative;
-    z-index: 2; /* Para que todo el contenido esté por encima del fondo */
-  }
-  .fc-event {
-    cursor: pointer;
-  }
-  /* Modal */
-  .modal {
-    display: none;
-    position: fixed;
-    z-index: 999;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-  }
-  .modal-content {
-    background: white;
-    max-width: 500px;
-    margin: 10% auto;
-    padding: 20px;
-    border-radius: 10px;
-    position: relative;
-  }
-  .modal-close {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    cursor: pointer;
-    font-size: 18px;
-    color: #aaa;
-  }
-  .modal-close:hover {
-    color: black;
-  }
-</style>
- 
+    .calendar-header h1 {
+      font-size: 2.5em;
+      margin: 0;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .calendar-header h2 {
+      font-size: 1.5em;
+      margin: 5px 0 0 0;
+      font-weight: normal;
+      color: #555;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.15);
+    }
+
+    #calendar {
+      position: relative;
+      max-width: 900px;
+      margin: 40px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    #calendar::before {
+      content: "";
+      position: absolute;
+      top: 20;
+      left: 50;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://i.imgur.com/BmpM8Rt.jpeg');
+      background-size: 68%;
+      background-position: left;
+      background-repeat: no-repeat;
+      opacity: 0.4;
+      z-index: 1;
+    }
+
+    .fc-view,
+    .fc-view * {
+      position: relative;
+      z-index: 2;
+    }
+
+    .fc-event {
+      cursor: pointer;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      background: white;
+      max-width: 500px;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      cursor: pointer;
+      font-size: 18px;
+      color: #aaa;
+    }
+
+    .modal-close:hover {
+      color: black;
+    }
+  </style>
 </head>
+
 <body>
+  <div class="calendar-header">
+    <h1>CALENDARIO DE EVENTOS</h1>
+    <h2>CLUB DE PESCA COSTA TROPICAL</h2>
+  </div>
+
   <div id="calendar"></div>
- 
+
   <!-- Modal -->
   <div class="modal" id="eventoModal">
     <div class="modal-content">
@@ -89,16 +123,16 @@
       <div id="modalDetalles"></div>
     </div>
   </div>
- 
+
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
- 
+
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const calendarEl = document.getElementById('calendar');
       const modal = document.getElementById('eventoModal');
       const modalDetalles = document.getElementById('modalDetalles');
- 
+
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         firstDay: 1,
@@ -111,8 +145,7 @@
         events: [],
         eventClick: function(info) {
           const data = info.event.extendedProps.datosFila;
- 
-          // Construimos el contenido de la modal
+
           modalDetalles.innerHTML = `
             <h3>${info.event.title}</h3>
             <p><strong>Fecha:</strong> ${info.event.startStr}</p>
@@ -125,11 +158,11 @@
           modal.style.display = 'block';
         }
       });
- 
+
       calendar.render();
- 
+
       const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKSb1EXkwC_yS66UHxKRFZe4GGeoSHrYIglb0fasG9XSUMHi-amqUB2Bn56tOSUfor3D97WOExPPPc/pub?gid=1560710832&single=true&output=csv';
- 
+
       fetch(CSV_URL)
         .then(response => {
           if (!response.ok) throw new Error("No se pudo cargar el CSV");
@@ -137,7 +170,7 @@
         })
         .then(csvText => {
           const data = Papa.parse(csvText, { header: true }).data;
- 
+
           const events = data
             .filter(row => row.Fecha && row.Modalidad && row.Tipo)
             .map(row => {
@@ -146,20 +179,19 @@
                 return {
                   title: `${row.Modalidad} - ${row.Tipo} (${row.Lugar || 'Sin lugar'})`,
                   start: `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`,
-                  datosFila: row // Guardamos la fila completa para mostrar en la modal
+                  datosFila: row
                 };
               }
               return null;
             })
             .filter(event => event !== null);
- 
+
           calendar.addEventSource(events);
         })
         .catch(error => {
           console.error("❌ Error al cargar el CSV:", error);
         });
- 
-      // Cerrar la modal si se hace clic fuera del contenido
+
       window.onclick = function(event) {
         if (event.target === modal) {
           modal.style.display = "none";
