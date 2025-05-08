@@ -22,7 +22,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="/socket.io/socket.io.js"></script> <!-- Cliente de Socket.IO -->
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -42,43 +41,42 @@
 
       calendar.render();
 
-      // 🔄 Función para cargar eventos del CSV
-      function cargarEventos() {
-        fetch('/csv')
-          .then(response => {
-            if (!response.ok) {
-              console.error("❌ Error al obtener el CSV:", response.status, response.statusText);
-              throw new Error(`Error al obtener el CSV: ${response.statusText}`);
-            }
-            return response.text();
-          })
-          .then(csvText => {
-            const data = Papa.parse(csvText, { header: true }).data;
+      // 🚀 Cargamos el CSV desde el servidor local
+      fetch('/csv')
+        .then(response => {
+          if (!response.ok) {
+            console.error("❌ Error al obtener el CSV:", response.status, response.statusText);
+            throw new Error(`Error al obtener el CSV: ${response.statusText}`);
+          }
+          return response.text();
+        })
+        .then(csvText => {
+          console.log("✅ CSV obtenido correctamente:");
+          console.log(csvText);
 
-            const events = data
-              .filter(row => row.Fecha && row.Evento)
-              .map(row => {
-                const formattedDate = formatDate(row.Fecha);
-                if (formattedDate) {
-                  return {
-                    title: row.Evento,
-                    start: formattedDate
-                  };
-                }
-                console.warn("⚠️ Fecha inválida encontrada:", row.Fecha);
-                return null;
-              })
-              .filter(event => event !== null);
+          const data = Papa.parse(csvText, { header: true }).data;
 
-            calendar.removeAllEventSources(); // Limpiar eventos antiguos
-            calendar.addEventSource(events);   // Añadir eventos nuevos
-          })
-          .catch(error => {
-            console.error("❌ Error en la petición fetch:", error.message);
-          });
-      }
+          const events = data
+            .filter(row => row.Fecha && row.Evento)
+            .map(row => {
+              const formattedDate = formatDate(row.Fecha);
+              if (formattedDate) {
+                return {
+                  title: row.Evento,
+                  start: formattedDate
+                };
+              }
+              console.warn("⚠️ Fecha inválida encontrada:", row.Fecha);
+              return null;
+            })
+            .filter(event => event !== null);
 
-      // 🔄 Función para formatear la fecha al estilo ISO (yyyy-mm-dd)
+          calendar.addEventSource(events);
+        })
+        .catch(error => {
+          console.error("❌ Error en la petición fetch:", error.message);
+        });
+
       function formatDate(ddmmyyyy) {
         const [dd, mm, yyyy] = ddmmyyyy.split('/');
         if (dd && mm && yyyy) {
@@ -86,16 +84,6 @@
         }
         return null;
       }
-
-      // 🚀 Cargamos los eventos inicialmente
-      cargarEventos();
-
-      // 🔔 Escuchamos el evento de actualización en tiempo real
-      const socket = io();
-      socket.on('csvUpdated', () => {
-        console.log("🔄 El CSV ha sido actualizado. Recargando eventos...");
-        cargarEventos();
-      });
     });
   </script>
 </body>
