@@ -12,18 +12,36 @@
     padding: 0;
     background: #f9f9f9;
   }
-    #calendar {
+     #calendar {
+    position: relative;
     max-width: 900px;
     margin: 40px auto;
     background: white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden; /* Para que el fondo no se salga del borde redondeado */
+  }
+
+  #calendar::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-image: url('https://i.imgur.com/BmpM8Rt.jpeg');
-    background-size: 80%;
+    background-size: 70%; /* Ajusta el tamaño según prefieras */
     background-position: center;
     background-repeat: no-repeat;
-    opacity: 0.8; /* Ajusta la opacidad si quieres que se vea más o menos tenue */
+    opacity: 0.1; /* Atenuado para que no moleste la lectura */
+    z-index: 1;
+  }
+
+  .fc-view,
+  .fc-view * {
+    position: relative;
+    z-index: 2; /* Para que todo el contenido esté por encima del fondo */
   }
   .fc-event {
     cursor: pointer;
