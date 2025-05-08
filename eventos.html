@@ -42,7 +42,7 @@
     #calendar::before {
       content: "";
       position: absolute;
-      top: 50px;
+      top: 70px;
       left: 50px;
       width: 100%;
       height: 100%;
@@ -63,6 +63,18 @@
 
     .fc-event {
       cursor: pointer;
+    }
+
+    /* Ajuste de altura para móviles */
+    #calendar .fc-scroller {
+      overflow: visible !important; 
+    }
+
+    @media screen and (max-width: 768px) {
+      #calendar {
+        height: auto !important; /* 📱 Adaptar al contenido */
+        min-height: 700px; /* 🔄 Evitar el recorte de la última semana */
+      }
     }
 
     /* Modal */
@@ -107,7 +119,6 @@
     <h2>CLUB DE PESCA COSTA TROPICAL</h2>
   </div>
 
-  <button id="viewToggle">Cambiar a Vista Lista</button>
   <div id="calendar"></div>
 
   <!-- Modal -->
@@ -126,12 +137,9 @@
       const calendarEl = document.getElementById('calendar');
       const modal = document.getElementById('eventoModal');
       const modalDetalles = document.getElementById('modalDetalles');
-      const viewToggle = document.getElementById('viewToggle');
-
-      let currentView = 'dayGridMonth'; // 🚀 Siempre inicia en vista de calendario
 
       const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: currentView,
+        initialView: 'dayGridMonth', // 🚀 Siempre inicia en vista de calendario
         firstDay: 1,
         locale: 'es',
         headerToolbar: {
@@ -163,12 +171,6 @@
       });
 
       calendar.render();
-
-      viewToggle.addEventListener('click', () => {
-        currentView = currentView === 'dayGridMonth' ? 'listMonth' : 'dayGridMonth';
-        calendar.changeView(currentView);
-        viewToggle.textContent = currentView === 'dayGridMonth' ? 'Cambiar a Vista Lista' : 'Cambiar a Vista Mensual';
-      });
 
       const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKSb1EXkwC_yS66UHxKRFZe4GGeoSHrYIglb0fasG9XSUMHi-amqUB2Bn56tOSUfor3D97WOExPPPc/pub?gid=1560710832&single=true&output=csv';
 
