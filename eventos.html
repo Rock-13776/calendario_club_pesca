@@ -72,8 +72,8 @@
 
     @media screen and (max-width: 768px) {
       #calendar {
-        height: auto !important; /* 📱 Adaptar al contenido */
-        min-height: 700px; /* 🔄 Evitar el recorte de la última semana */
+        height: auto !important; 
+        min-height: 700px;
       }
     }
 
@@ -129,8 +129,10 @@
     </div>
   </div>
 
+  <!-- Librerías necesarias -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script> 
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -139,7 +141,7 @@
       const modalDetalles = document.getElementById('modalDetalles');
 
       const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth', // 🚀 Siempre inicia en vista de calendario
+        initialView: 'dayGridMonth',
         firstDay: 1,
         locale: 'es',
         headerToolbar: {
@@ -155,8 +157,6 @@
         events: [],
         eventClick: function(info) {
           const data = info.event.extendedProps.datosFila;
-
-          // Construimos el contenido de la modal
           modalDetalles.innerHTML = `
             <h3>${info.event.title}</h3>
             <p><strong>Fecha:</strong> ${info.event.startStr}</p>
@@ -172,6 +172,17 @@
 
       calendar.render();
 
+      // Integración de Hammer.js para Swipe
+      const hammer = new Hammer(calendarEl);
+
+      hammer.on('swipeleft', function () {
+        calendar.next();
+      });
+
+      hammer.on('swiperight', function () {
+        calendar.prev();
+      });
+
       const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKSb1EXkwC_yS66UHxKRFZe4GGeoSHrYIglb0fasG9XSUMHi-amqUB2Bn56tOSUfor3D97WOExPPPc/pub?gid=1560710832&single=true&output=csv';
 
       fetch(CSV_URL)
@@ -180,36 +191,30 @@
           return response.text();
         })
         .then(csvText => {
-		  const data = Papa.parse(csvText, { header: true }).data;
+          const data = Papa.parse(csvText, { header: true }).data;
 
-		  // Mapa de colores
-		  const colorMap = {
-			"SURFCASTING": "#4A90E2",
-			"SPINNING": "#7ED321",
-			"EMBARCACIÓN": "#F5A623",
-			"KAYAK": "#D0021B"
-		  };
+          const colorMap = {
+            "SURFCASTING": "#4A90E2",
+            "SPINNING": "#7ED321",
+            "EMBARCACIÓN": "#F5A623",
+            "KAYAK": "#D0021B"
+          };
 
-		  const events = data
-			.filter(row => row.Fecha && row.Modalidad && row.Tipo)
-			.map(row => {
-			  const [dd, mm, yyyy] = row.Fecha.split('/');
-			  if (dd && mm && yyyy) {
-				return {
-				  title: `${row.INICIAL}-${row.Modalidad} - ${row.Tipo} (${row.Lugar || 'Sin lugar'})`,
-				  start: `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`,
-				  backgroundColor: colorMap[row.Modalidad] || '#9B9B9B',
-				  borderColor: colorMap[row.Modalidad] || '#9B9B9B',
-				  datosFila: row
-				};
-			  }
-			  return null;
-			})
-			.filter(event => event !== null);
+          const events = data
+            .filter(row => row.Fecha && row.Modalidad && row.Tipo)
+            .map(row => {
+              const [dd, mm, yyyy] = row.Fecha.split('/');
+              return {
+                title: `${row.INICIAL}-${row.Modalidad} - ${row.Tipo} (${row.Lugar || 'Sin lugar'})`,
+                start: `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`,
+                backgroundColor: colorMap[row.Modalidad] || '#9B9B9B',
+                borderColor: colorMap[row.Modalidad] || '#9B9B9B',
+                datosFila: row
+              };
+            });
 
-		  calendar.addEventSource(events);
-		})
-
+          calendar.addEventSource(events);
+        })
         .catch(error => {
           console.error("❌ Error al cargar el CSV:", error);
         });
