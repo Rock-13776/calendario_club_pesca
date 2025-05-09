@@ -55,6 +55,11 @@
       pointer-events: none;
     }
 
+	/* Ocultar fondo en vista lista */
+    #calendar.no-background::before {
+      display: none;
+    }
+
     .fc-view,
     .fc-view * {
       position: relative;
@@ -110,12 +115,14 @@
     .modal-close:hover {
       color: black;
     }
+	
+	
   </style>
 </head>
 
 <body>
   <div class="calendar-header">
-    <h2>-CALENDARIO DE EVENTOS-</h2>
+    <h2>CALENDARIO DE EVENTOS</h2>
     <h2>CLUB DE PESCA COSTA TROPICAL</h2>
   </div>
 
@@ -167,6 +174,21 @@
             <p><strong>Notas:</strong> ${data.Notas || 'Sin notas'}</p>
           `;
           modal.style.display = 'block';
+        }
+		 viewDidMount: function (info) {
+          // Añadir o quitar clase según la vista
+          if (info.view.type === 'listMonth') {
+            calendarEl.classList.add('no-background');
+          } else {
+            calendarEl.classList.remove('no-background');
+          }
+        },
+        datesSet: function (info) {
+          if (info.view.type === 'listMonth') {
+            calendarEl.classList.add('no-background');
+          } else {
+            calendarEl.classList.remove('no-background');
+          }
         }
       });
 
