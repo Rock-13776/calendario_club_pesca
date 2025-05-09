@@ -196,11 +196,11 @@
 			  const [dd, mm, yyyy] = row.Fecha.split('/');
 			  if (dd && mm && yyyy) {
 				return {
-				  title: `${row.Modalidad} - ${row.Tipo} (${row.Lugar || 'Sin lugar'})\n${row.INICIAL || ''}`,
-                  start: `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`,
-                  backgroundColor: colorMap[row.Modalidad] || '#9B9B9B',
-                  borderColor: colorMap[row.Modalidad] || '#9B9B9B',
-                  datosFila: row
+				  title: `${row.INICIAL} - ${row.Modalidad} - ${row.Tipo} (${row.Lugar || 'Sin lugar'})`,
+				  start: `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`,
+				  backgroundColor: colorMap[row.Modalidad] || '#9B9B9B',
+				  borderColor: colorMap[row.Modalidad] || '#9B9B9B',
+				  datosFila: row
 				};
 			  }
 			  return null;
