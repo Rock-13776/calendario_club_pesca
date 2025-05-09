@@ -39,8 +39,76 @@
       overflow: hidden;
     }
 
-    #calendar .fc-event-title {
-      white-space: pre-line; /* Permite saltos de línea */
+    #calendar::before {
+      content: "";
+      position: absolute;
+      top: 60px;
+      left: 30px;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://i.imgur.com/BmpM8Rt.jpeg');
+      background-size: 68%;
+      background-position: left;
+      background-repeat: no-repeat;
+      opacity: 0.4;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .fc-view,
+    .fc-view * {
+      position: relative;
+      z-index: 2;
+    }
+
+    .fc-event {
+      cursor: pointer;
+    }
+
+    /* Ajuste de altura para móviles */
+    #calendar .fc-scroller {
+      overflow: visible !important; 
+    }
+
+    @media screen and (max-width: 768px) {
+      #calendar {
+        height: auto !important; /* 📱 Adaptar al contenido */
+        min-height: 700px; /* 🔄 Evitar el recorte de la última semana */
+      }
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      background: white;
+      max-width: 500px;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      cursor: pointer;
+      font-size: 18px;
+      color: #aaa;
+    }
+
+    .modal-close:hover {
+      color: black;
     }
   </style>
 </head>
@@ -53,15 +121,25 @@
 
   <div id="calendar"></div>
 
+  <!-- Modal -->
+  <div class="modal" id="eventoModal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="document.getElementById('eventoModal').style.display='none'">&times;</span>
+      <div id="modalDetalles"></div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const calendarEl = document.getElementById('calendar');
+      const modal = document.getElementById('eventoModal');
+      const modalDetalles = document.getElementById('modalDetalles');
 
       const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
+        initialView: 'dayGridMonth', // 🚀 Siempre inicia en vista de calendario
         firstDay: 1,
         locale: 'es',
         headerToolbar: {
@@ -74,7 +152,22 @@
           month: 'Mes',
           list: 'Lista'
         },
-        events: []
+        events: [],
+        eventClick: function(info) {
+          const data = info.event.extendedProps.datosFila;
+
+          // Construimos el contenido de la modal
+          modalDetalles.innerHTML = `
+            <h3>${info.event.title}</h3>
+            <p><strong>Fecha:</strong> ${info.event.startStr}</p>
+            <p><strong>Modalidad:</strong> ${data.Modalidad}</p>
+            <p><strong>Tipo:</strong> ${data.Tipo}</p>
+            <p><strong>Categoría:</strong> ${data.Categoria}</p>
+            <p><strong>Lugar:</strong> ${data.Lugar || 'No especificado'}</p>
+            <p><strong>Notas:</strong> ${data.Notas || 'Sin notas'}</p>
+          `;
+          modal.style.display = 'block';
+        }
       });
 
       calendar.render();
@@ -83,40 +176,42 @@
 
       fetch(CSV_URL)
         .then(response => {
-          if (!response.ok) throw new Error('No se pudo cargar el CSV');
+          if (!response.ok) throw new Error("No se pudo cargar el CSV");
           return response.text();
         })
         .then(csvText => {
-          const data = Papa.parse(csvText, { header: true }).data;
+		  const data = Papa.parse(csvText, { header: true }).data;
 
-          const colorMap = {
-            "SURFCASTING": "#4A90E2",
-            "SPINNING": "#7ED321",
-            "EMBARCACIÓN": "#F5A623",
-            "KAYAK": "#D0021B"
-          };
+		  // Mapa de colores
+		  const colorMap = {
+			"SURFCASTING": "#4A90E2",
+			"SPINNING": "#7ED321",
+			"EMBARCACIÓN": "#F5A623",
+			"KAYAK": "#D0021B"
+		  };
 
-          const events = data
-            .filter(row => row.Fecha && row.Modalidad && row.Tipo)
-            .map(row => {
-              const [dd, mm, yyyy] = row.Fecha.split('/');
-              if (dd && mm && yyyy) {
-                return {
-                  title: `${row.Modalidad} - ${row.Tipo} (${row.Lugar || 'Sin lugar'})\n${row.INICIAL || ''}`,
+		  const events = data
+			.filter(row => row.Fecha && row.Modalidad && row.Tipo)
+			.map(row => {
+			  const [dd, mm, yyyy] = row.Fecha.split('/');
+			  if (dd && mm && yyyy) {
+				return {
+				  title: `${row.Modalidad} - ${row.Tipo} (${row.Lugar || 'Sin lugar'})\n${row.INICIAL || ''}`,
                   start: `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`,
                   backgroundColor: colorMap[row.Modalidad] || '#9B9B9B',
                   borderColor: colorMap[row.Modalidad] || '#9B9B9B',
                   datosFila: row
-                };
-              }
-              return null;
-            })
-            .filter(event => event !== null);
+				};
+			  }
+			  return null;
+			})
+			.filter(event => event !== null);
 
-          calendar.addEventSource(events);
-        })
+		  calendar.addEventSource(events);
+		})
+
         .catch(error => {
-          console.error('❌ Error al cargar el CSV:', error);
+          console.error("❌ Error al cargar el CSV:", error);
         });
     });
   </script>
