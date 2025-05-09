@@ -55,6 +55,11 @@
       pointer-events: none;
     }
 
+    /* Ocultar fondo en vista lista */
+    #calendar.no-background::before {
+      display: none;
+    }
+
     .fc-view,
     .fc-view * {
       position: relative;
@@ -75,40 +80,6 @@
         height: auto !important; /* 📱 Adaptar al contenido */
         min-height: 700px; /* 🔄 Evitar el recorte de la última semana */
       }
-    }
-
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 999;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-    }
-
-    .modal-content {
-      background: white;
-      max-width: 500px;
-      margin: 10% auto;
-      padding: 20px;
-      border-radius: 10px;
-      position: relative;
-    }
-
-    .modal-close {
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      cursor: pointer;
-      font-size: 18px;
-      color: #aaa;
-    }
-
-    .modal-close:hover {
-      color: black;
     }
   </style>
 </head>
@@ -145,7 +116,22 @@
           month: 'Mes',
           list: 'Lista'
         },
-        events: []
+        events: [],
+        viewDidMount: function (info) {
+          // Añadir o quitar clase según la vista
+          if (info.view.type === 'listMonth') {
+            calendarEl.classList.add('no-background');
+          } else {
+            calendarEl.classList.remove('no-background');
+          }
+        },
+        datesSet: function (info) {
+          if (info.view.type === 'listMonth') {
+            calendarEl.classList.add('no-background');
+          } else {
+            calendarEl.classList.remove('no-background');
+          }
+        }
       });
 
       calendar.render();
@@ -177,7 +163,6 @@
         .then(csvText => {
           const data = Papa.parse(csvText, { header: true }).data;
 
-          // Mapa de colores para las modalidades
           const colorMap = {
             "SURFCASTING": "#4A90E2",
             "SPINNING": "#7ED321",
@@ -191,11 +176,11 @@
               const [dd, mm, yyyy] = row.Fecha.split('/');
               if (dd && mm && yyyy) {
                 return {                  
-				  title: `${row.INICIAL}-${row.Modalidad} - ${row.Tipo} (${row.Lugar || 'Sin lugar'})`,
-				  start: `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`,
-				  backgroundColor: colorMap[row.Modalidad] || '#9B9B9B',
-				  borderColor: colorMap[row.Modalidad] || '#9B9B9B',
-				  datosFila: row
+                  title: `${row.INICIAL}-${row.Modalidad} - ${row.Tipo} (${row.Lugar || 'Sin lugar'})`,
+                  start: `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`,
+                  backgroundColor: colorMap[row.Modalidad] || '#9B9B9B',
+                  borderColor: colorMap[row.Modalidad] || '#9B9B9B',
+                  datosFila: row
                 };
               }
               return null;
